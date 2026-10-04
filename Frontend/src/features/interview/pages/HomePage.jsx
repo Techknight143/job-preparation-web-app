@@ -8,10 +8,21 @@ function HomePage(){
     const [jobDescription,setJobDescription] = useState("");
     const [selfDescription,setSelfDescription] = useState("");
     const [resumeFile, setResumeFile] = useState(null);
+    const [errorMessage,setErrorMessage] = useState("");
     const resumeInputRef = useRef();
 
     const navigate = useNavigate();
     const handleGenerateReport = async() => {
+        if(!jobDescription && (!resumeFile || !selfDescription)){
+            setErrorMessage("Please provide the jobDescription, selfDescription and resume file.");
+            return;
+        }else if(!resumeFile && !selfDescription){
+            setErrorMessage("Please provide the selfDescription or resume file.");
+            return;
+        }if(!jobDescription){
+            setErrorMessage("Please provide the jobDescription.");
+            return;
+        }
         const resumeFile = resumeInputRef.current.files[0];
         const data = await generateReport({jobDescription,selfDescription,resumeFile});
         navigate(`/interview/${data._id}`);
@@ -124,6 +135,7 @@ function HomePage(){
                 {/* Card Footer */}
                 <div className='interview-card__footer'>
                     <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
+                    {errorMessage && <p className='error-msg' role='alert'>{errorMessage} </p>}
                     <button
                         onClick={handleGenerateReport}
                         className='generate-btn'>
