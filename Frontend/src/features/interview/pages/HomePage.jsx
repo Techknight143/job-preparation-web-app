@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useInterview } from '../hooks/useInterview';
 import { useNavigate } from 'react-router';
+import { useAuth } from '../../auth/hooks/useAuth';
 import '../styles/home.scss'
 
 function HomePage(){
@@ -9,9 +10,25 @@ function HomePage(){
     const [selfDescription,setSelfDescription] = useState("");
     const [resumeFile, setResumeFile] = useState(null);
     const [errorMessage,setErrorMessage] = useState("");
+    const [logoutError, setLogoutError] = useState("");
     const resumeInputRef = useRef();
+    const accountRef = useRef(null);
+    const [isAccountInfoVisible, setIsAccountInfoVisible] = useState(false);
 
     const navigate = useNavigate();
+    const { user, handleLogout, loading: authLoading } = useAuth();
+
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (!accountRef.current?.contains(event.target)) {
+                setIsAccountInfoVisible(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, []);
+
     const handleGenerateReport = async() => {
         if(!jobDescription && (!resumeFile || !selfDescription)){
             setErrorMessage("Please provide the jobDescription, selfDescription and resume file.");
@@ -28,6 +45,18 @@ function HomePage(){
         navigate(`/interview/${data._id}`);
     }
 
+    const handleAccountLogout = async () => {
+        setLogoutError("");
+        try {
+            await handleLogout();
+            navigate('/login');
+        } catch (error) {
+            setLogoutError(
+                error.response?.data?.message || "Unable to log out. Please try again."
+            );
+        }
+    };
+
      if (loading) {
         return (
             <main className='loading-screen'>
@@ -38,6 +67,35 @@ function HomePage(){
 
     return(
        <div className='home-page'>
+
+                <div className="login-acc" ref={accountRef}>
+                    <button
+                        className="login-acc__button"
+                        type="button"
+                        aria-label="Show account details"
+                        aria-expanded={isAccountInfoVisible}
+                        onClick={() => setIsAccountInfoVisible((visible) => !visible)}
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user preview-icon"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                    {isAccountInfoVisible && (
+                        <div className="account-info">
+                            <p><strong>ID:</strong> {user?.id ?? user?._id ?? 'Unavailable'}</p>
+                            <p><strong>Username:</strong> {user?.username ?? 'Unavailable'}</p>
+                            <p><strong>Email:</strong> {user?.email ?? 'Unavailable'}</p>
+                            {logoutError && <p className="account-info__error" role="alert">{logoutError}</p>}
+                            <button
+                                className="account-info__logout"
+                                type="button"
+                                onClick={handleAccountLogout}
+                                disabled={authLoading}
+                            >
+                                {authLoading ? 'Logging out...' : 'Log out'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+
 
             {/* Page Header */}
             <header className='page-header'>
@@ -175,4 +233,3 @@ function HomePage(){
 }
 
 export default HomePage;
-

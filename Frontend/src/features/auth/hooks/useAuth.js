@@ -38,7 +38,7 @@ export const useAuth = () => {
             setUser(null)
         } catch (e) {
             console.log("Error in logout-->", e);
-
+            throw e;
         } finally {
             setLoading(false);
         }

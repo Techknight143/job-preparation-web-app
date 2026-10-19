@@ -34,6 +34,7 @@ export const getInterviewReportById = async({interviewId}) => {
 export const getAllInteviewReports = async() => {
     const response = await api.get("/api/interview");
     return response.data;
+
 }
 
 
